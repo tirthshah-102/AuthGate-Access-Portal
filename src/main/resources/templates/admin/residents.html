@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident Management - AuthGate</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a th:href="@{/admin/dashboard}" class="navbar-brand">Auth<span>Gate</span></a>
+        <div style="display: flex; gap: 1.5rem; align-items: center;">
+            <a th:href="@{/admin/dashboard}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border: none; background: transparent;">Dashboard</a>
+            <a th:href="@{/admin/residents}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: rgba(59, 130, 246, 0.15); border-color: var(--primary); color: white;">Residents</a>
+            <a th:href="@{/admin/logs}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border: none; background: transparent;">Gate Logs</a>
+        </div>
+        <div class="navbar-user">
+            <span class="user-tag">Administrator</span>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div style="margin-bottom: 2rem;">
+            <h1 style="font-size: 2rem; font-weight: 700;">Resident Accounts Management</h1>
+            <p style="color: var(--text-muted);">Register, manage, and delete resident accounts in the society portal.</p>
+        </div>
+
+        <!-- Alert messages -->
+        <div th:if="${param.success != null && param.success[0] == 'added'}" class="alert alert-success">
+            Resident registered successfully!
+        </div>
+        <div th:if="${param.success != null && param.success[0] == 'deleted'}" class="alert alert-success">
+            Resident account deleted successfully.
+        </div>
+
+        <div class="grid-2col">
+            <!-- Left Side: Registration Form -->
+            <div class="glass-panel">
+                <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem;">Register New Resident</h2>
+                
+                <form th:action="@{/admin/residents}" th:object="${newResident}" method="post">
+                    <div class="form-group">
+                        <label for="fullName">Resident Full Name *</label>
+                        <input type="text" id="fullName" th:field="*{fullName}" placeholder="Enter full name" required>
+                        <div class="error-msg" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="flatNumber">Flat / Unit Number *</label>
+                        <input type="text" id="flatNumber" th:field="*{flatNumber}" placeholder="e.g. A-101, B-202" required>
+                        <div class="error-msg" th:if="${#fields.hasErrors('flatNumber')}" th:errors="*{flatNumber}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phoneNumber">Phone Number *</label>
+                        <input type="tel" id="phoneNumber" th:field="*{phoneNumber}" placeholder="10-digit phone number" required>
+                        <div class="error-msg" th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="username">Login Username *</label>
+                        <input type="text" id="username" th:field="*{username}" placeholder="Unique login name" required autocomplete="username">
+                        <div class="error-msg" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Login Password *</label>
+                        <input type="password" id="password" th:field="*{password}" placeholder="At least 6 characters" required autocomplete="new-password">
+                        <div class="error-msg" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success" style="width: 100%; margin-top: 1rem;">
+                        Create Resident Account
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right Side: Residents List -->
+            <div class="glass-panel">
+                <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem;">Registered Residents</h2>
+                
+                <div th:if="${residents.empty}" style="text-align: center; padding: 4rem 0; color: var(--text-muted);">
+                    <p>No residents registered yet.</p>
+                </div>
+
+                <div th:if="${!residents.empty}" class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Flat</th>
+                                <th>Phone</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="res : ${residents}">
+                                <td style="font-weight: 600;" th:text="${res.fullName}">Tirth Resident</td>
+                                <td style="color: var(--primary); font-weight: 600;" th:text="${res.flatNumber}">A-101</td>
+                                <td th:text="${res.phoneNumber}">9876543210</td>
+                                <td>
+                                    <a th:href="@{/admin/residents/delete/{id}(id=${res.id})}" 
+                                       onclick="return confirm('Are you sure you want to delete this resident account?')"
+                                       class="btn btn-danger" 
+                                       style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 4px;">
+                                        Delete
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

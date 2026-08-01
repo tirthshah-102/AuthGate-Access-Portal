@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident Dashboard - AuthGate</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="#" class="navbar-brand">Auth<span>Gate</span></a>
+        <div class="navbar-user">
+            <span class="user-tag" th:text="${resident.fullName} + ' (Flat ' + ${resident.flatNumber} + ')'">Full Name (Flat A-101)</span>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div>
+                <h1 style="font-size: 2rem; font-weight: 700;">Resident Dashboard</h1>
+                <p style="color: var(--text-muted);">Manage guest entries and invite codes for your flat.</p>
+            </div>
+            <a th:href="@{/resident/create-pass}" class="btn btn-primary">
+                + Create Gate Pass
+            </a>
+        </div>
+
+        <div class="glass-panel">
+            <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">Generated Gate Passes</h2>
+            
+            <div th:if="${passes.empty}" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                <p>No gate passes generated yet. Click "+ Create Gate Pass" to make one.</p>
+            </div>
+
+            <div th:if="${!passes.empty}" class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Guest Name</th>
+                            <th>Phone</th>
+                            <th>Vehicle No</th>
+                            <th>Purpose</th>
+                            <th>Valid From</th>
+                            <th>Valid To</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="pass : ${passes}">
+                            <td style="font-weight: 600;" th:text="${pass.visitorName}">John Doe</td>
+                            <td th:text="${pass.visitorPhone}">9876543210</td>
+                            <td th:text="${pass.visitorVehicleNo != null && !pass.visitorVehicleNo.empty ? pass.visitorVehicleNo : 'N/A'}">MH-12-AB-1234</td>
+                            <td th:text="${pass.purpose}">Guest</td>
+                            <td th:text="${#temporals.format(pass.validFrom, 'dd MMM yyyy, hh:mm a')}">01 Aug, 10:00 AM</td>
+                            <td th:text="${#temporals.format(pass.validTo, 'dd MMM yyyy, hh:mm a')}">01 Aug, 02:00 PM</td>
+                            <td>
+                                <!-- Status badge rendering -->
+                                <span th:if="${pass.status == 'ACTIVE' && !pass.expired}" class="badge badge-active">Active</span>
+                                <span th:if="${pass.status == 'ACTIVE' && pass.expired}" class="badge badge-expired">Expired</span>
+                                <span th:if="${pass.status == 'CHECKED_IN'}" class="badge badge-checked-in">Checked In</span>
+                                <span th:if="${pass.status == 'CHECKED_OUT'}" class="badge badge-checked-out">Checked Out</span>
+                            </td>
+                            <td>
+                                <a th:href="@{/resident/view-pass/{token}(token=${pass.passToken})}" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; border-radius: 6px;">
+                                    View / Share
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

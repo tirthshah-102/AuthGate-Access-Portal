@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Gate Pass - AuthGate</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a th:href="@{/guard/dashboard}" class="navbar-brand">Auth<span>Gate</span></a>
+        <div class="navbar-user">
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container" style="max-width: 650px;">
+        <div style="margin-bottom: 1.5rem;">
+            <a th:href="@{/guard/dashboard}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                &larr; Back to Scanner
+            </a>
+        </div>
+
+        <!-- If Error is Present -->
+        <div th:if="${error != null}" class="glass-panel verification-card">
+            <div class="banner banner-used">INVALID CODE</div>
+            <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem;" th:text="${error}">Error details</p>
+            <a th:href="@{/guard/dashboard}" class="btn btn-primary">Return to Dashboard</a>
+        </div>
+
+        <!-- If Pass is Found -->
+        <div th:if="${pass != null}" class="glass-panel">
+            
+            <!-- Dynamic Status Banner -->
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div th:if="${canCheckIn}" class="banner banner-valid">✓ VALID GATE PASS</div>
+                <div th:if="${expired}" class="banner banner-expired">✗ EXPIRED PASS</div>
+                <div th:if="${notYetActive}" class="banner banner-inactive">⚠ NOT YET ACTIVE</div>
+                <div th:if="${pass.status == 'CHECKED_IN'}" class="banner banner-valid" style="background: rgba(59, 130, 246, 0.15); border-color: var(--primary); color: var(--primary); box-shadow: 0 0 20px var(--primary-glow);">✓ IN-SOCIETY (ACTIVE ENTRY)</div>
+                <div th:if="${alreadyUsed}" class="banner banner-used">✗ ALREADY USED & CLOSED</div>
+            </div>
+
+            <!-- Pass Details -->
+            <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                Visitor Information
+            </h2>
+            
+            <div class="details-list" style="margin-bottom: 2rem;">
+                <div class="details-row">
+                    <span class="details-label">Visitor Full Name:</span>
+                    <span class="details-value" th:text="${pass.visitorName}">John Doe</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Visitor Phone:</span>
+                    <span class="details-value" th:text="${pass.visitorPhone}">9876543210</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Vehicle Number:</span>
+                    <span class="details-value" th:text="${pass.visitorVehicleNo != null && !pass.visitorVehicleNo.empty ? pass.visitorVehicleNo : 'None'}">MH-12-AB-1234</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Purpose of Visit:</span>
+                    <span class="details-value" th:text="${pass.purpose}">Delivery</span>
+                </div>
+            </div>
+
+            <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                Destination & Validity
+            </h2>
+
+            <div class="details-list" style="margin-bottom: 2rem;">
+                <div class="details-row">
+                    <span class="details-label">Host Resident:</span>
+                    <span class="details-value" th:text="${pass.resident.fullName}">Resident Name</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Target Flat Number:</span>
+                    <span class="details-value" style="color: var(--primary);" th:text="${pass.resident.flatNumber}">A-101</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Active From:</span>
+                    <span class="details-value" th:text="${#temporals.format(pass.validFrom, 'dd MMM yyyy, hh:mm a')}">01 Aug, 10:00 AM</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Expires On:</span>
+                    <span class="details-value" th:text="${#temporals.format(pass.validTo, 'dd MMM yyyy, hh:mm a')}">01 Aug, 02:00 PM</span>
+                </div>
+            </div>
+
+            <!-- Action form for Check In -->
+            <form th:if="${canCheckIn}" th:action="@{/guard/check-in}" method="post" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem;">
+                <input type="hidden" name="token" th:value="${pass.passToken}">
+                <div class="form-group">
+                    <label for="checkin-notes">Guard Remarks / Observations (Optional)</label>
+                    <textarea id="checkin-notes" name="notes" placeholder="e.g. ID verified, visitor wearing mask, temperature OK..." rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%;">
+                    Approve Entry & Check In
+                </button>
+            </form>
+
+            <!-- Action form for Check Out -->
+            <form th:if="${canCheckOut}" th:action="@{/guard/check-out}" method="post" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem;">
+                <input type="hidden" name="token" th:value="${pass.passToken}">
+                <div class="form-group">
+                    <label for="checkout-notes">Guard Remarks / Observations (Optional)</label>
+                    <textarea id="checkout-notes" name="notes" placeholder="e.g. Checked vehicle boot space..." rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Approve Exit & Check Out
+                </button>
+            </form>
+
+            <!-- Expired / Used / Inactive states - No action buttons -->
+            <div th:if="${expired || notYetActive || alreadyUsed}" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem; text-align: center;">
+                <p style="color: var(--danger); font-weight: 600;" th:if="${expired}">Entry is rejected because this pass has expired.</p>
+                <p style="color: var(--warning); font-weight: 600;" th:if="${notYetActive}">Entry is on-hold because the pass is not yet active.</p>
+                <p style="color: var(--text-muted); font-weight: 600;" th:if="${alreadyUsed}">This visitor has already completed their visit cycle and checked out.</p>
+                
+                <a th:href="@{/guard/dashboard}" class="btn btn-secondary" style="margin-top: 1rem; width: 100%;">Return to Dashboard</a>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

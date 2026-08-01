@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AuthGate</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a th:href="@{/admin/dashboard}" class="navbar-brand">Auth<span>Gate</span></a>
+        <div style="display: flex; gap: 1.5rem; align-items: center;">
+            <a th:href="@{/admin/dashboard}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: rgba(59, 130, 246, 0.15); border-color: var(--primary); color: white;">Dashboard</a>
+            <a th:href="@{/admin/residents}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border: none; background: transparent;">Residents</a>
+            <a th:href="@{/admin/logs}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border: none; background: transparent;">Gate Logs</a>
+        </div>
+        <div class="navbar-user">
+            <span class="user-tag">Administrator</span>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div style="margin-bottom: 2rem;">
+            <h1 style="font-size: 2rem; font-weight: 700;">Society Administration</h1>
+            <p style="color: var(--text-muted);">Overview of security status, residents registration, and gate passes logs.</p>
+        </div>
+
+        <!-- Metrics Row -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <span class="metric-title">Registered Residents</span>
+                <span class="metric-value" th:text="${totalResidents}">12</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-title">Active Passes / Invites</span>
+                <span class="metric-value" style="color: var(--success);" th:text="${activePassesCount}">4</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-title">Visitors Inside Society</span>
+                <span class="metric-value" style="color: var(--primary);" th:text="${checkedInCount}">1</span>
+            </div>
+        </div>
+
+        <!-- Recent Activity Logs Panel -->
+        <div class="glass-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="font-size: 1.25rem; font-weight: 600;">Recent Entry/Exit Logs</h2>
+                <a th:href="@{/admin/logs}" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">View All Logs</a>
+            </div>
+
+            <div th:if="${logs.empty}" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                <p>No visitor entry logs recorded yet.</p>
+            </div>
+
+            <div th:if="${!logs.empty}" class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Guest Name</th>
+                            <th>Host Resident</th>
+                            <th>Flat</th>
+                            <th>Purpose</th>
+                            <th>Check-In Time</th>
+                            <th>Check-Out Time</th>
+                            <th>Authorized Guard</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="log : ${logs}">
+                            <td style="font-weight: 600;" th:text="${log.gatePass.visitorName}">Guest Name</td>
+                            <td th:text="${log.gatePass.resident.fullName}">Resident Name</td>
+                            <td style="color: var(--primary); font-weight: 600;" th:text="${log.gatePass.resident.flatNumber}">A-101</td>
+                            <td th:text="${log.gatePass.purpose}">Purpose</td>
+                            <td th:text="${#temporals.format(log.entryTime, 'dd MMM, hh:mm a')}">01 Aug, 10:00 AM</td>
+                            <td>
+                                <span th:if="${log.exitTime != null}" th:text="${#temporals.format(log.exitTime, 'dd MMM, hh:mm a')}">01 Aug, 02:00 PM</span>
+                                <span th:if="${log.exitTime == null}" style="color: var(--success); font-weight: 600;">Inside Society</span>
+                            </td>
+                            <td th:text="${log.guard != null ? log.guard.fullName : 'System'}">Guard Name</td>
+                            <td style="font-size: 0.85rem; color: var(--text-muted);" th:text="${log.notes != null && !log.notes.empty ? log.notes : '-'}">Remarks</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Gate Pass - AuthGate</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <style>
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .navbar, .no-print {
+                display: none !important;
+            }
+            .glass-panel {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                color: black !important;
+            }
+            .qr-container {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+            }
+            .btn {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a th:href="@{/resident/dashboard}" class="navbar-brand">Auth<span>Gate</span></a>
+        <div class="navbar-user no-print">
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container" style="max-width: 600px;">
+        <div class="no-print" style="margin-bottom: 2rem;">
+            <a th:href="@{/resident/dashboard}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                &larr; Back to Dashboard
+            </a>
+        </div>
+
+        <div class="glass-panel" style="text-align: center;">
+            <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">VISITOR INVITE PASS</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;" th:text="'Host Flat: ' + ${pass.resident.flatNumber}">Host Flat: A-101</p>
+            
+            <!-- QR Code Card -->
+            <div class="qr-container">
+                <img th:src="'data:image/png;base64,' + ${qrCode}" alt="Pass QR Code">
+            </div>
+
+            <p style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace; word-break: break-all;" th:text="${pass.passToken}">pass-token-string</p>
+            
+            <div class="details-list" style="max-width: 400px; margin: 2rem auto; text-align: left;">
+                <div class="details-row">
+                    <span class="details-label">Guest Name:</span>
+                    <span class="details-value" th:text="${pass.visitorName}">John Doe</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Phone:</span>
+                    <span class="details-value" th:text="${pass.visitorPhone}">9876543210</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Vehicle No:</span>
+                    <span class="details-value" th:text="${pass.visitorVehicleNo != null && !pass.visitorVehicleNo.empty ? pass.visitorVehicleNo : 'None'}">MH-12-AB-1234</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Purpose:</span>
+                    <span class="details-value" th:text="${pass.purpose}">Guest Visit</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Valid From:</span>
+                    <span class="details-value" th:text="${#temporals.format(pass.validFrom, 'dd MMM yyyy, hh:mm a')}">01 Aug, 10:00 AM</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Valid To:</span>
+                    <span class="details-value" th:text="${#temporals.format(pass.validTo, 'dd MMM yyyy, hh:mm a')}">01 Aug, 02:00 PM</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Current Status:</span>
+                    <span class="details-value">
+                        <span th:if="${pass.status == 'ACTIVE' && !pass.expired}" class="badge badge-active">Active</span>
+                        <span th:if="${pass.status == 'ACTIVE' && pass.expired}" class="badge badge-expired">Expired</span>
+                        <span th:if="${pass.status == 'CHECKED_IN'}" class="badge badge-checked-in">Checked In</span>
+                        <span th:if="${pass.status == 'CHECKED_OUT'}" class="badge badge-checked-out">Checked Out</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="no-print" style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                <button onclick="window.print()" class="btn btn-secondary">Print Pass</button>
+                <button onclick="copyVerificationLink()" class="btn btn-primary">Copy Guard Link</button>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        function copyVerificationLink() {
+            var token = [[${pass.passToken}]];
+            var host = window.location.origin;
+            var verifyUrl = host + "/guard/verify?token=" + token;
+            
+            navigator.clipboard.writeText(verifyUrl).then(function() {
+                alert("Guard scan link copied to clipboard! You can open this link in another tab (logged in as guard) to simulate a QR code scan.");
+            }, function(err) {
+                alert("Could not copy link automatically. Here is the token: " + token);
+            });
+        }
+    </script>
+</body>
+</html>

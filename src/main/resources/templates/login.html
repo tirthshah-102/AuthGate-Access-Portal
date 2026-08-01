@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuthGate - Login</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="container">
+        <div class="login-wrapper">
+            <div class="glass-panel login-card">
+                <div class="login-header">
+                    <h1>Auth<span>Gate</span></h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Residential Society Visitor Access Portal</p>
+                </div>
+
+                <!-- Alert Messages -->
+                <div th:if="${param.error}" class="alert alert-danger">
+                    Invalid username or password. Please try again.
+                </div>
+                <div th:if="${param.logout}" class="alert alert-success">
+                    You have been logged out successfully.
+                </div>
+
+                <form th:action="@{/login}" method="post">
+                    <!-- CSRF token is automatically included by Thymeleaf when using th:action -->
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" placeholder="Enter username" required autocomplete="username">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="Enter password" required autocomplete="current-password">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                        Sign In Securely
+                    </button>
+                </form>
+
+                <div class="login-tips">
+                    <p style="font-weight: 600; margin-bottom: 0.25rem;">Seeded Demo Credentials:</p>
+                    <ul style="padding-left: 1rem; list-style-type: disc;">
+                        <li><strong>Admin:</strong> admin / admin123</li>
+                        <li><strong>Resident:</strong> resident1 / pass123</li>
+                        <li><strong>Guard:</strong> guard / guard123</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

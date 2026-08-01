@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guard Dashboard - AuthGate</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <!-- HTML5 QR Code Scanner Library CDN -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="#" class="navbar-brand">Auth<span>Gate</span></a>
+        <div class="navbar-user">
+            <span class="user-tag" th:text="${guard.fullName} + ' (Security)'">Guard Name</span>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div style="margin-bottom: 2rem;">
+            <h1 style="font-size: 2rem; font-weight: 700;">Security Gate Dashboard</h1>
+            <p style="color: var(--text-muted);">Scan guest QR codes or type tokens to verify entry/exit.</p>
+        </div>
+
+        <!-- Feedback Messages -->
+        <div th:if="${param.success != null && param.success[0] == 'checkedin'}" class="alert alert-success">
+            Visitor check-in logged successfully.
+        </div>
+        <div th:if="${param.success != null && param.success[0] == 'checkedout'}" class="alert alert-success">
+            Visitor check-out logged successfully.
+        </div>
+
+        <div class="grid-2col">
+            <!-- Left Panel: Scanner options -->
+            <div class="glass-panel">
+                <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem;">Verify Invite Code</h2>
+                
+                <!-- Manual input form -->
+                <form th:action="@{/guard/verify}" method="get" style="margin-bottom: 2rem;">
+                    <div class="form-group">
+                        <label for="token">Enter Invite Token Code</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="token" name="token" placeholder="Paste UUID or use test tokens" required>
+                            <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1rem;">Verify</button>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            Try test codes: <strong style="color: var(--success); cursor: pointer;" onclick="document.getElementById('token').value='active-pass-token'">active-pass-token</strong> or 
+                            <strong style="color: var(--danger); cursor: pointer;" onclick="document.getElementById('token').value='expired-pass-token'">expired-pass-token</strong>
+                        </p>
+                    </div>
+                </form>
+
+                <hr style="border-color: rgba(255,255,255,0.05); margin: 2rem 0;">
+
+                <!-- Live Camera Scanner -->
+                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="display: inline-block; width: 8px; height: 8px; background: var(--success); border-radius: 50%;"></span>
+                    Live Camera QR Code Scanner
+                </h3>
+                
+                <div class="scanner-box">
+                    <div class="scanner-glow"></div>
+                    <div id="reader" style="width: 100%;"></div>
+                </div>
+
+                <!-- File Scan Input -->
+                <div style="margin-top: 1.5rem;">
+                    <label for="qr-file">Or Upload QR Code Image</label>
+                    <input type="file" id="qr-file" accept="image/*">
+                </div>
+            </div>
+
+            <!-- Right Panel: Today's Logs -->
+            <div class="glass-panel">
+                <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem;">Recent Gate Activity Today</h2>
+                
+                <div th:if="${logs.empty}" style="text-align: center; padding: 4rem 0; color: var(--text-muted);">
+                    <p>No activity logged by you today yet.</p>
+                </div>
+
+                <div th:if="${!logs.empty}" class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Guest</th>
+                                <th>Flat</th>
+                                <th>In</th>
+                                <th>Out</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="log : ${logs}">
+                                <td style="font-weight: 600;" th:text="${log.gatePass.visitorName}">Guest Name</td>
+                                <td th:text="${log.gatePass.resident.flatNumber}">A-101</td>
+                                <td style="font-size: 0.85rem;" th:text="${#temporals.format(log.entryTime, 'hh:mm a')}">10:00 AM</td>
+                                <td style="font-size: 0.85rem;">
+                                    <span th:if="${log.exitTime != null}" th:text="${#temporals.format(log.exitTime, 'hh:mm a')}">12:00 PM</span>
+                                    <span th:if="${log.exitTime == null}" style="color: var(--success); font-weight: 600;">Still Inside</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scanner Initialization Script -->
+    <script th:inline="javascript">
+        // Start live camera scanner
+        function onScanSuccess(decodedText, decodedResult) {
+            // Redirect to verify endpoint
+            window.location.href = "/guard/verify?token=" + encodeURIComponent(decodedText);
+        }
+
+        function onScanFailure(error) {
+            // fail silently or handle if debug needed
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", 
+            { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            }, 
+            /* verbose= */ false
+        );
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+
+        // Upload and scan image file handler
+        const fileInput = document.getElementById('qr-file');
+        fileInput.addEventListener('change', e => {
+            if (e.target.files.length === 0) {
+                return;
+            }
+            const imageFile = e.target.files[0];
+            const html5QrCode = new Html5QrCode("reader");
+            
+            html5QrCode.scanFile(imageFile, true)
+                .then(decodedText => {
+                    window.location.href = "/guard/verify?token=" + encodeURIComponent(decodedText);
+                })
+                .catch(err => {
+                    alert("Error scanning image file: No valid QR code found in this image.");
+                    console.error(err);
+                });
+        });
+    </script>
+</body>
+</html>
